@@ -1412,10 +1412,16 @@
   </footer>
 
   <script>
- // ================= Admin Panel Data Hydration =================
-    const __dg_raw = localStorage.getItem('dg_data');
+    // ================= Admin Panel Data Hydration =================
     let __dg = {};
-    if(__dg_raw){ try{ __dg = JSON.parse(__dg_raw); }catch(e){} }
+    try {
+      const raw = localStorage.getItem('dg_data');
+      if (raw) __dg = JSON.parse(raw);
+    } catch (e) {
+      console.warn('LocalStorage blocked or unavailable:', e);
+      __dg = {};
+    }
+  
 
     function __hydrateText(sel, text){ const el = document.querySelector(sel); if(el && text !== undefined) el.textContent = text; }
     function __hydrateAttr(sel, attr, val){ const el = document.querySelector(sel); if(el && val !== undefined) el.setAttribute(attr, val); }
