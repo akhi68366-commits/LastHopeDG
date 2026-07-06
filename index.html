@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeathGivers | AS - Lifesteal PvP Team</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Oxanium:wght@300;500;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+ <style>
+    :root {
+      --bg: #090909;
+      --card: #151515;
+      --primary: #8A2BE2;
+      --secondary: #FF003C;
+      --cyan: #00FFFF;
+      --text: #ffffff;
+      --text-dim: #b0b0b0;
+      --border: rgba(138, 43, 226, 0.25);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      cursor: none;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+ position: relative;
+    }
+
+    ::selection {
+      background: var(--primary);
+      color: var(--text);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(var(--primary), var(--secondary));
+      border-radius: 5px;
+    }
+
+    /* Loading Screen */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease, visibility 0.8s;
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .cube-loader {
+      width: 60px;
+      height: 60px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: rotateCube 2s infinite linear;
+ margin-bottom: 30px;
+    }
+
+    .loader-face {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border: 2px solid var(--primary);
+      background: rgba(138, 43, 226, 0.15);
+      box-shadow: 0 0 15px var(--primary);
+    }
+
+    .loader-face:nth-child(1) { transform: rotateY(0deg) translateZ(30px); }
+    .loader-face:nth-child(2) { transform: rotateY(90deg) translateZ(30px); border-color: var(--secondary); box-shadow: 0 0 15px var(--secondary); }
+    .loader-face:nth-child(3) { transform: rotateY(180deg) translateZ(30px); }
+    .loader-face:nth-child(4) { transform: rotateY(-90deg) translateZ(30px); border-color: var(--secondary); box-shadow: 0 0 15px var(--secondary); }
+    .loader-face:nth-child(5) { transform: rotateX(90deg) translateZ(30px); border-color: var(--cyan); box-shadow: 0 0 15px var(--cyan); }
+    .loader-face:nth-child(6) { transform: rotateX(-90deg) translateZ(30px); border-color: var(--cyan); box-shadow: 0 0 15px var(--cyan); }
+
+    @keyframes rotateCube {
+      0% { transform: rotateX(0) rotateY(0) rotateZ(0); }
+      100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(180deg); }
+    }
+
+    .loader-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: pulseText 1.5s infinite;
+    }
+
+    @keyframes pulseText {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Custom Cursor */
+    .cursor {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--cyan);
+      background: rgba(0, 255, 255, 0.3);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 99998;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s, height 0.2s, background 0.2s;
+      box-shadow: 0 0 10px var(--cyan), 0 0 20px var(--cyan);
+      mix-blend-mode: difference;
+    }
+
+    .cursor.hovering {
+      width: 36px;
+      height: 36px;
+      background: rgba(138, 43,226, 0.2);
+      border-color: var(--primary);
+      box-shadow: 0 0 15px var(--primary), 0 0 30px var(--primary);
+    }
+
+    /* Canvas Background */
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    /* Gradient overlay */
+    .bg-gradient-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(138,43,226,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255,0,60,0.12) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(0,255,255,0.05) 0%, transparent 70%);
+      animation: bgShift 10s infinite alternate;
+    }
+
+    @keyframes bgShift {
+      0% { opacity: 0.8; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.1); }
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 1rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      background: rgba(9,9,9,0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      transition: padding 0.3s;
+    }
+
+    .nav-scrolled {
+      padding: 0.6rem 5%;
+      background: rgba(9,9,9,0.95);
+      box-shadow: 0 0 20px rgba(138,43,226,0.2);
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-shadow: 0 0 10px var(--primary);
+    }
+
+    .logo span {
+ background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-icon {
+      font-size: 1.6rem;
+      color: var(--primary);
+      filter: drop-shadow(0 0 5px var(--primary));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      transition: color 0.3s;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      transition: width 0.3s;
+      box-shadow: 0 0 8px var(--primary);
+    }
+
+    .nav-links a:hover {
+      color: var(--cyan);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 1.5rem;
+      cursor: none;
+    }
+
+    /* Music Toggle */
+    .music-toggle {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      z-index: 999;
+      cursor: none;
+      box-shadow: 0 0 15px rgba(138,43,226,0.4);
+      transition: all 0.3s;
+    }
+
+    .music-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px var(--primary);
+    }
+
+    .music-toggle.playing {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      animation: spin 4s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Sections */
+    section {
+      padding: 6rem 5%;
+ position: relative;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      display: inline-block;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: var(--text-dim);
+      margin-bottom: 3rem;
+      font-family: 'Oxanium', sans-serif;
+      letter-spacing: 1px;
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      padding-top: 80px;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-tag {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan);
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeInUp 1s forwards 0.3s;
+    }
+
+    .hero-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+
+    .hero-death {
+      background: linear-gradient(180deg, #ffffff, #c0c0c0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(138,43,226,0.6));
+    }
+
+    .hero-glow {
+      display: block;
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      color: var(--text);
+      letter-spacing: 8px;
+      margin-top: 0.5rem;
+      text-shadow: 0 0 20px var(--primary), 0 0 40px rgba(138,43,226,0.5);
+      opacity: 0;
+      animation: fadeInUp 1s forwards 0.5s;
+    }
+
+    .hero-arena {
+      font-family: 'Oxanium', sans-serif;
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      color: var(--secondary);
+      text-shadow: 0 0 10px var(--secondary);
+      letter-spacing: 5px;
+      margin: 1rem 0;
+      opacity: 0;
+      animation: fadeInUp 1s forwards 0.7s;
+    }
+
+    .hero-icons {
+      font-size: 1.5rem;
+      margin: 1.5rem 0;
+      color: var(--cyan);
+      text-shadow: 0 0 15px var(--cyan);
+      opacity: 0;
+      animation: fadeInUp 1s forwards 0.9s;
+    }
+
+    .typing-container {
+      height: 40px;
+      margin: 1.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      opacity: 0;
+      animation: fadeInUp 1s forwards 1.1s;
+    }
+
+    .typing-prefix {
+      font-family: 'Oxanium', sans-serif;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .typing-text {
+      font-family: 'Orbitron', monospace;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan);
+      font-size: 1.1rem;
+      white-space: nowrap;
+      border-right: 2px solid var(--cyan);
+      padding-right: 5px;
+      animation: blinkCursor 0.8s infinite;
+    }
+
+    @keyframes blinkCursor {
+      0%, 100% { border-color: transparent; }
+      50% { border-color: var(--cyan); }
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 2.5rem;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeInUp 1s forwards 1.3s;
+    }
+
+    .btn {
+      font-family: 'Orbitron', sans-serif;
+      padding: 1rem 2.5rem;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border: none;
+      cursor: none;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, var(--primary), #4B0082);
+      color: var(--text);
+      box-shadow: 0 0 20px rgba(138,43,226,0.5), inset 0 0 10px rgba(255,255,255,0.1);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 30px var(--primary), 0 0 60px rgba(138,43,226,0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 2px solid var(--secondary);
+      box-shadow: 0 0 15px rgba(255,0,60,0.3), inset 0 0 10px rgba(255,0,60,0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,0,60,0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 0 30px var(--secondary);
+ }
+
+    /* Floating cubes decoration */
+    .floating-cube {
+      position: absolute;
+      border: 1px solid var(--primary);
+      background: rgba(138,43,226,0.1);
+      box-shadow: 0 0 10px var(--primary);
+      animation: floatCube linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes floatCube {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Ripple Effect */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(0,255,255,0.4);
+      transform: scale(0);
+      animation: rippleAnim 0.6s linear;
+      pointer-events: none;
+    }
+
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* About */
+    .about-content {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 3rem auto 0;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top:0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary);
+      box-shadow: 0 0 25px rgba(138,43,226,0.3);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      color: var(--cyan);
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 0 8px var(--cyan));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .feature-card h3 {
+      font-family: 'Orbitron', sans-serif;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .feature-card p {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    /* Members */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem;
+      max-width: 1100px;
+      margin: 3rem auto;
+    }
+
+    .member-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 2rem 1rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .member-card:hover {
+      transform: scale(1.03);
+      border-color: var(--secondary);
+      box-shadow: 0 0 30px rgba(255,0,60,0.3);
+    }
+
+    .member-avatar {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1rem;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      background: linear-gradient(135deg, var(--card), #1a1a1a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      color: var(--primary);
+      text-shadow: 0 0 10px var(--primary);
+      box-shadow: 0 0 15px rgba(138,43,226,0.3);
+    }
+
+    .member-role {
+      font-family: 'Oxanium', sans-serif;
+      color: var(--secondary);
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+
+    .member-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+    }
+
+    .member-badge {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.2rem 0.8rem;
+      font-size: 0.75rem;
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      border-radius: 2px;
+      font-family: 'Oxanium', sans-serif;
+    }
+
+    /* Stats */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto 3rem;
+    }
+
+    .stat-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .stat-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(180deg, var(--text), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-family: 'Oxanium', sans-serif;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 0.9rem;
+    }
+
+    /* Gallery */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .gallery-item {
+      aspect-ratio: 16/9;
+      background: var(--card);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      cursor: none;
+      transition: all 0.4s;
+    }
+
+    .gallery-item::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(45deg, rgba(138,43,226,0.3), rgba(255,0,60,0.2));
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1;
+    }
+
+    .gallery-item:hover::before {
+      opacity: 1;
+    }
+
+    .gallery-item img, .gallery-placeholder {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+
+    .gallery-item:hover img, .gallery-item:hover .gallery-placeholder {
+      transform: scale(1.1);
+    }
+
+    .gallery-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #111, #1a1a1a);
+      color: var(--text-dim);
+      gap: 0.5rem;
+    }
+
+    .gallery-placeholder i {
+      font-size: 2.5rem;
+      color: var(--primary);
+    }
+
+    .gallery-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      color: var(--text);
+      font-size: 2rem;
+      z-index: 2;
+      transition: transform 0.3s;
+      text-shadow: 0 0 10px var(--cyan);
+    }
+
+    .gallery-item:hover .gallery-overlay {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* Montages */
+    .videos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .video-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .video-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 30px rgba(138,43,226,0.3);
+      border-color: var(--primary);
+    }
+
+    .video-wrapper {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+
+    .video-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .video-placeholder {
+ width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0a0a0a, #151515);
+      gap: 1rem;
+    }
+
+    .video-placeholder i {
+      font-size: 3rem;
+      color: var(--secondary);
+      filter: drop-shadow(0 0 10px var(--secondary));
+    }
+
+    .play-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      font-size: 1.5rem;
+      box-shadow: 0 0 20px var(--primary);
+      transition: transform 0.3s;
+    }
+
+    .video-card:hover .play-btn {
+      transform: scale(1.1);
+    }
+
+    .video-info {
+      padding: 1.5rem;
+    }
+
+    .video-info h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .video-info p {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    /* Join Team */
+    .join-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 3rem;
+      position: relative;
+      box-shadow: 0 0 30px rgba(138,43,226,0.1);
+    }
+
+    .join-container::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      right: -1px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      box-shadow: 0 0 15px var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: 'Oxanium', sans-serif;
+      margin-bottom: 0.5rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.9rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      outline: none;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(138,43,226,0.3);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 3rem 5%;
+      text-align: center;
+    }
+
+    .footer-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 10px var(--primary);
+    }
+
+    .footer-socials {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .footer-socials a {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      font-size: 1.2rem;
+      transition: all 0.3s;
+      text-decoration: none;
+ position: relative;
+      overflow: hidden;
+    }
+
+    .footer-socials a:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 0 15px var(--primary);
+      color: var(--text);
+    }
+
+    .footer-tag {
+      font-family: 'Oxanium', sans-serif;
+      color: var(--secondary);
+      letter-spacing: 2px;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .copyright {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    /* Reveal on scroll */
+    .reveal {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 0.8s ease;
+    }
+
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 70%;
+        height: 100vh;
+        background: rgba(9,9,9,0.98);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        transition: right 0.4s;
+        border-left: 1px solid var(--border);
+      }
+
+      .nav-links.open {
+        right: 0;
+      }
+
+      .mobile-menu-btn {
+        display: block;
+        z-index: 1001;
+      }
+
+      .hero-title {
+        font-size: 3rem;
+      }
+
+      section {
+        padding: 4rem 5%;
+      }
+
+      .join-container {
+        padding: 2rem;
+      }
+
+ .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* Glitch effect on logo occasionally */
+    .glitch {
+      position: relative;
+    }
+
+    .glitch::before, .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+    }
+
+    /* Sword silhouette decoration */
+    .sword-deco {
+      position: fixed;
+      font-size: 8rem;
+      color: rgba(138,43,226,0.05);
+      z-index: -1;
+      pointer-events: none;
+      animation: swordDrift 20s infinite linear;
+    }
+
+    @keyframes swordDrift {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-50px) rotate(5deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+
+    .spark {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      pointer-events: none;
+      animation: sparkFly 1s forwards;
+    }
+
+    @keyframes sparkFly {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0) translate(var(--tx), var(--ty)); }
+    }
+
+    /* Minecraft block button style variant */
+    .block-btn {
+      clip-path: polygon(
+        0 4px, 4px 4px, 4px 0,
+        calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+        100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%,
+        4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)
+ );
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="cube-loader">
+      <div class="loader-face"></div>
+      <div class="loader-face"></div>
+      <div class="loader-face"></div>
+      <div class="loader-face"></div>
+      <div class="loader-face"></div>
+      <div class="loader-face"></div>
+    </div>
+    <div class="loader-text">Loading DeathGivers</div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor"></div>
+
+  <!-- Canvas Background -->
+  <canvas id="particle-canvas"></canvas>
+  <div class="bg-gradient-overlay"></div>
+
+  <!-- Floating Cubes -->
+ <div class="floating-cube" style="width: 30px; height: 30px; left: 10%; animation-duration: 15s; animation-delay: 0s;"></div>
+  <div class="floating-cube" style="width: 20px; height: 20px; left: 30%; animation-duration: 18s; animation-delay: 2s; border-color: var(--secondary);"></div>
+  <div class="floating-cube" style="width: 40px; height: 40px; left: 70%; animation-duration: 22s; animation-delay: 5s; border-color: var(--cyan);"></div>
+  <div class="floating-cube" style="width: 25px; height: 25px; left: 85%; animation-duration: 20s; animation-delay: 3s;"></div>
+  <div class="floating-cube" style="width: 15px; height: 15px; left: 50%; animation-duration: 16s; animation-delay: 7s; border-color: var(--secondary);"></div>
+
+  <!-- Navigation -->
+  <nav id="navbar">
+    <a href="#" class="logo glitch" data-text="DEATHGIVERS | AS">
+      <i class="fas fa-skull logo-icon"></i>
+      <span>DEATHGIVERS | AS</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#members">Members</a></li>
+      <li><a href="#montages">Montages</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#join">Join Team</a></li>
+      <li><a href="https://discord.com" target="_blank">Discord</a></li>
+    </ul>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+      <i class="fas fa-bars"></i>
+    </button>
+  </nav>
+
+  <!-- Music Toggle -->
+  <button class="music-toggle" id="musicToggle" title="Toggle Music">
+    <i class="fas fa-music"></i>
+  </button>
+
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <div class="hero-tag">We Are</div>
+      <h1 class="hero-title">
+        <span class="hero-death">DEATHGIVERS | AS</span>
+        <span class="hero-glow">DOMINATING FFA CLAN</span>
+      </h1>
+      <div class="hero-arena">⚔️ PvP • Gank • Teamwork ⚔️</div>
+      <div class="typing-container">
+        <span class="typing-prefix">&gt;</span>
+        <span class="typing-text" id="typingText"></span>
+      </div>
+      <div class="hero-buttons">
+        <a href="#join" class="btn btn-primary block-btn">Join Team</a>
+        <a href="#montages" class="btn btn-secondary block-btn">Watch Montage</a>
+      </div>
+    </div>
+ </section>
+
+  <!-- About Section -->
+  <section id="about">
+    <h2 class="section-title reveal">About Us</h2>
+    <p class="section-subtitle reveal">Forged in combat. Bound by victory.</p>
+    <div class="about-content reveal">
+      <p>
+        <strong style="color: var(--primary);">DeathGivers | AS</strong> is an elite Minecraft PvP team focused on Lifesteal domination. 
+        We strike fear into our enemies and leave no survivors. Our coordination is deadly, 
+        our tactics are ruthless, and our legacy is eternal.
+      </p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="fas fa-crosshairs"></i></div>
+        <h3>Competitive PvP</h3>
+        <p>Elite hand-to-hand combat and crystal PvP specialists.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="fas fa-users-slash"></i></div>
+        <h3>FFA Gank</h3>
+        <p>Coordinated ganks that overwhelm and annihilate opponents.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="fas fa-calendar-alt"></i></div>
+        <h3>Team Events</h3>
+        <p>Regular tournaments, scrims, and server takeovers.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="fas fa-heart-broken"></i></div>
+        <h3>Lifesteal Arena</h3>
+        <p>Dominating the hardest Lifesteal servers in the community.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="fas fa-star"></i></div>
+        <h3>Skilled Members</h3>
+        <p>Recruiting only the best. No weaknesses allowed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Members Section -->
+  <section id="members">
+    <h2 class="section-title reveal">Team Members</h2>
+    <p class="section-subtitle reveal">The warriors behind the legend</p>
+
+    <div class="stats-container reveal">
+      <div class="stat-box">
+        <div class="stat-number" data-target="0">0</div>
+        <div class="stat-label">PvP Wins</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" data-target="0">0</div>
+        <div class="stat-label">Montages</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" data-target="0">0</div>
+        <div class="stat-label">Events</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" data-target="5">0</div>
+        <div class="stat-label">Active Members</div>
+      </div>
+    </div>
+
+    <div class="team-grid">
+      <div class="member-card reveal">
+        <div class="member-avatar"><i class="fas fa-crown"></i></div>
+        <div class="member-role">Leader</div>
+        <div class="member-name">N/A</div>
+ <span class="member-badge">Recruiting</span>
+      </div>
+      <div class="member-card reveal">
+        <div class="member-avatar"><i class="fas fa-shield-halved"></i></div>
+        <div class="member-role">Co-Leader</div>
+        <div class="member-name">N/A</div>
+        <span class="member-badge">Recruiting</span>
+      </div>
+      <div class="member-card reveal">
+        <div class="member-avatar"><i class="fas fa-sword"></i></div>
+        <div class="member-role">Smp PvP Master</div>
+        <div class="member-name">N/A</div>
+        <span class="member-badge">Open</span>
+      </div>
+      <div class="member-card reveal">
+        <div class="member-avatar"><i class="fas fa-fire"></i></div>
+        <div class="member-role">Nethpot PvP</div>
+        <div class="member-name">N/A</div>
+        <span class="member-badge">Open</span>
+      </div>
+      <div class="member-card reveal">
+        <div class="member-avatar"><i class="fas fa-video"></i></div>
+        <div class="member-role">Montage Editor</div>
+        <div class="member-name">Reaper</div>
+        <span class="member-badge">Editor</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Montages Section -->
+  <section id="montages">
+    <h2 class="section-title reveal">Montages</h2>
+    <p class="section-subtitle reveal">Our finest battlefield moments</p>
+    <div class="videos-grid">
+      <div class="video-card reveal">
+        <div class="video-wrapper">
+          <div class="video-placeholder" onclick="alert('Replace VIDEO_ID with your YouTube video ID in the HTML!')">
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+            <p style="color: var(--text-dim); font-size: 0.9rem;">Click to Setup Embed</p>
+          </div>
+          <!-- Replace VIDEO_ID below with actual YouTube ID -->
+          <!-- <iframe src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe> -->
+        </div>
+        <div class="video-info">
+          <h3>Latest PvP Montage</h3>
+          <p>Domination in the Lifesteal arena. Epic combos and ganks.</p>
+        </div>
+      </div>
+      <div class="video-card reveal">
+        <div class="video-wrapper">
+          <div class="video-placeholder" onclick="alert('Replace VIDEO_ID with your YouTube video ID in the HTML!')">
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+ <p style="color: var(--text-dim); font-size: 0.9rem;">Click to Setup Embed</p>
+ </div>
+        </div>
+        <div class="video-info">
+          <h3>FFA Highlights</h3>
+          <p>Free-for-all chaos and calculated kills.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery Section -->
+  <section id="gallery">
+    <h2 class="section-title reveal">Gallery</h2>
+    <p class="section-subtitle reveal">Screenshots from the battlefield</p>
+    <div class="gallery-grid">
+      <div class="gallery-item reveal">
+        <div class="gallery-placeholder">
+          <i class="fas fa-image"></i>
+          <span>Screenshot 1</span>
+        </div>
+        <div class="gallery-overlay"><i class="fas fa-search-plus"></i></div>
+      </div>
+      <div class="gallery-item reveal">
+        <div class="gallery-placeholder">
+          <i class="fas fa-image"></i>
+          <span>Screenshot 2</span>
+        </div>
+        <div class="gallery-overlay"><i class="fas fa-search-plus"></i></div>
+      </div>
+      <div class="gallery-item reveal">
+        <div class="gallery-placeholder">
+          <i class="fas fa-image"></i>
+          <span>Screenshot 3</span>
+        </div>
+        <div class="gallery-overlay"><i class="fas fa-search-plus"></i></div>
+      </div>
+      <div class="gallery-item reveal">
+        <div class="gallery-placeholder">
+          <i class="fas fa-image"></i>
+          <span>Screenshot 4</span>
+        </div>
+        <div class="gallery-overlay"><i class="fas fa-search-plus"></i></div>
+      </div>
+      <div class="gallery-item reveal">
+        <div class="gallery-placeholder">
+          <i class="fas fa-image"></i>
+          <span>Screenshot 5</span>
+        </div>
+        <div class="gallery-overlay"><i class="fas fa-search-plus"></i></div>
+      </div>
+      <div class="gallery-item reveal">
+        <div class="gallery-placeholder">
+          <i class="fas fa-image"></i>
+          <span>Screenshot 6</span>
+        </div>
+        <div class="gallery-overlay"><i class="fas fa-search-plus"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Join Team -->
+  <section id="join">
+    <h2 class="section-title reveal">Join The Team</h2>
+    <p class="section-subtitle reveal">Think you have what it takes?</p>
+    <div class="join-container reveal">
+      <form id="joinForm">
+        <div class="form-group">
+          <label>Minecraft IGN</label>
+          <input type="text" placeholder="Your Minecraft Username" required>
+        </div>
+        <div class="form-group">
+          <label>Discord Username</label>
+          <input type="text" placeholder="username#0000" required>
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" placeholder="Your Age" min="10" max="50" required>
+        </div>
+        <div class="form-group">
+          <label>Experience</label>
+          <select required>
+ <option value="">Select your PvP level</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+            <option value="expert">Expert / Competitive</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Why should we recruit you?</label>
+          <textarea placeholder="Tell us about your skills..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary block-btn" style="width: 100%;">Apply</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-logo"><i class="fas fa-skull"></i> DeathGivers | AS</div>
+    <div class="footer-tag">Built For Lifesteal Warriors</div>
+    <div class="footer-socials">
+      <a href="#" title="Discord"><i class="fab fa-discord"></i></a>
+      <a href="#" title="YouTube"><i class="fab fa-youtube"></i></a>
+      <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+    </div>
+    <div class="copyright">© 2026 DeathGivers | AS. All rights reserved.</div>
+  </footer>
+
+  <script>
+ // ================= Admin Panel Data Hydration =================
+    const __dg_raw = localStorage.getItem('dg_data');
+    let __dg = {};
+    if(__dg_raw){ try{ __dg = JSON.parse(__dg_raw); }catch(e){} }
+
+    function __hydrateText(sel, text){ const el = document.querySelector(sel); if(el && text !== undefined) el.textContent = text; }
+    function __hydrateAttr(sel, attr, val){ const el = document.querySelector(sel); if(el && val !== undefined) el.setAttribute(attr, val); }
+
+    if(__dg.title) document.title = __dg.title;
+
+    if(__dg.hero){
+      __hydrateText('.hero-tag', __dg.hero.tag);
+      __hydrateText('.hero-death', __dg.hero.title);
+      __hydrateText('.hero-glow', __dg.hero.subtitle);
+      __hydrateText('.hero-arena', __dg.hero.arena);
+      if(Array.isArray(__dg.hero.phrases) && __dg.hero.phrases.length) window.__phrasesOverride = __dg.hero.phrases;
+      if(__dg.hero.title){
+        const logo = document.querySelector('.logo');
+        if(logo){
+          const span = logo.querySelector('span');
+          if(span) span.textContent = __dg.hero.title;
+          logo.setAttribute('data-text', __dg.hero.title);
+        }
+      }
+    }
+
+    if(__dg.about){
+      const aboutP = document.querySelector('.about-content p');
+      if(aboutP){
+        const t = __dg.about.title || 'DeathGivers | AS';
+        const d = __dg.about.text || 'is an elite Minecraft PvP team focused on Lifesteal domination. We strike fear into our enemies and leave no survivors. Our coordination is deadly, our tactics are ruthless, and our legacy is eternal.';
+        aboutP.innerHTML = `<strong style="color: var(--primary);">${t}</strong> ${d}`;
+      }
+    }
+
+    if(Array.isArray(__dg.features) && __dg.features.length){
+      const fg = document.querySelector('.features-grid');
+      if(fg) fg.innerHTML = __dg.features.map(f => `
+        <div class="feature-card reveal active">
+          <div class="feature-icon"><i class="fas ${f.icon || 'fa-star'}"></i></div>
+          <h3>${f.title || ''}</h3>
+          <p>${f.desc || ''}</p>
+        </div>`).join('');
+    }
+
+    if(__dg.stats){
+      const statMap = {wins:0, montages:1, events:2, members:3};
+      const statEls = document.querySelectorAll('.stat-number');
+      Object.keys(statMap).forEach(k => {
+        if(__dg.stats[k] !== undefined && statEls[statMap[k]]){
+          statEls[statMap[k]].setAttribute('data-target', __dg.stats[k]);
+          statEls[statMap[k]].textContent = '0';
+        }
+      });
+    }
+
+    if(Array.isArray(__dg.members) && __dg.members.length){
+      const tg = document.querySelector('.team-grid');
+      if(tg) tg.innerHTML = __dg.members.map(m => `
+        <div class="member-card reveal active">
+          <div class="member-avatar"><i class="fas ${m.icon || 'fa-user'}"></i></div>
+          <div class="member-role">${m.role || ''}</div>
+          <div class="member-name">${m.name || ''}</div>
+          ${m.badge ? `<span class="member-badge">${m.badge}</span>` : ''}
+        </div>`).join('');
+    }
+
+    if(Array.isArray(__dg.montages) && __dg.montages.length){
+      const vg = document.querySelector('.videos-grid');
+      if(vg) vg.innerHTML = __dg.montages.map(v => `
+        <div class="video-card reveal active">
+          <div class="video-wrapper">
+            ${v.youtubeId ? `<iframe src="https://www.youtube.com/embed/${v.youtubeId}" allowfullscreen></iframe>` : `
+            <div class="video-placeholder" onclick="alert('Add a YouTube Video ID in the Admin Panel for this montage.')">
+              <div class="play-btn"><i class="fas fa-play"></i></div>
+              <p style="color:var(--text-dim);font-size:0.9rem;">No Video Linked</p>
+            </div>`}
+ </div>
+          <div class="video-info">
+            <h3>${v.title || ''}</h3>
+            <p>${v.desc || ''}</p>
+          </div>
+        </div>`).join('');
+    }
+
+    if(__dg.gallery && __dg.gallery.count){
+      const gg = document.querySelector('.gallery-grid');
+      if(gg){
+        gg.innerHTML = '';
+ for(let i=1; i<=__dg.gallery.count; i++){
+          gg.insertAdjacentHTML('beforeend', `
+ <div class="gallery-item reveal active" onclick="alert('Replace with lightbox or full image view!')">
+              <div class="gallery-placeholder"><i class="fas fa-image"></i><span>Screenshot ${i}</span></div>
+              <div class="gallery-overlay"><i class="fas fa-search-plus"></i></div>
+            </div>`);
+ }
+      }
+    }
+
+    if(__dg.footer){
+      const socials = document.querySelectorAll('.footer-socials a');
+      if(socials[0] && __dg.footer.discord) socials[0].href = __dg.footer.discord;
+      if(socials[1] && __dg.footer.youtube) socials[1].href = __dg.footer.youtube;
+      if(socials[2] && __dg.footer.instagram) socials[2].href = __dg.footer.instagram;
+      if(__dg.footer.copyright){
+        const cp = document.querySelector('.copyright');
+        if(cp) cp.textContent = __dg.footer.copyright;
+      }
+    }
+
+    if(__dg.nav && __dg.nav.discord){
+      const navDiscord = document.querySelector('.nav-links a[href*="discord"]');
+      if(navDiscord) navDiscord.href = __dg.nav.discord;
+    }
+    // ================= End Admin Panel Hydration =================
+
+    // --- Loading Screen ---
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loader').classList.add('hidden');
+      }, 1500);
+    });
+
+    // --- Custom Cursor ---
+    const cursor = document.getElementById('cursor');
+    let mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.15;
+      cursorY += (mouseY - cursorY) * 0.15;
+      cursor.style.left = cursorX + 'px';
+      cursor.style.top = cursorY + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // Hover effect on interactive elements
+    const interactables = document.querySelectorAll('a, button, .gallery-item, .video-card, .member-card, input, select, textarea');
+    interactables.forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'));
+    });
+
+    // --- Click Ripple Effect ---
+    document.addEventListener('click', (e) => {
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple';
+      ripple.style.left = e.clientX + 'px';
+      ripple.style.top = e.clientY + 'px';
+      ripple.style.width = ripple.style.height = '20px';
+      ripple.style.marginLeft = ripple.style.marginTop = '-10px';
+      document.body.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+      
+      // Random sparks
+      for(let i=0; i<5; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        spark.style.left = e.clientX + 'px';
+        spark.style.top = e.clientY + 'px';
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 50;
+        spark.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+        spark.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+ document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 1000);
+      }
+    });
+
+    // --- Navbar Scroll Effect ---
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if(window.scrollY > 50) navbar.classList.add('nav-scrolled');
+      else navbar.classList.remove('nav-scrolled');
+    });
+
+    // Mobile menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navLinks = document.getElementById('navLinks');
+    mobileMenuBtn.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+      const icon = mobileMenuBtn.querySelector('i');
+      icon.classList.toggle('fa-bars');
+      icon.classList.toggle('fa-times');
+    });
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        const icon = mobileMenuBtn.querySelector('i');
+        icon.classList.add('fa-bars');
+        icon.classList.remove('fa-times');
+      });
+    });
+
+    // --- Typing Animation ---
+ const phrases = window.__phrasesOverride || [
+      "Best Lifesteal Team",
+      "FFA TEAM",
+      "Never Back Down"
+    ];
+    let phraseIndex = 0, charIndex = 0, isDeleting = false;
+    const typingElement = document.getElementById('typingText');
+
+    function type() {
+      const current = phrases[phraseIndex];
+      if(isDeleting) {
+        typingElement.textContent = current.substring(0, charIndex - 1);
+        charIndex--;
+      } else {
+        typingElement.textContent = current.substring(0, charIndex + 1);
+ charIndex++;
+      }
+
+      let typeSpeed = isDeleting ? 50 : 100;
+
+      if(!isDeleting && charIndex === current.length) {
+        typeSpeed = 2000;
+        isDeleting = true;
+      } else if(isDeleting && charIndex === 0) {
+        isDeleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        typeSpeed = 500;
+      }
+
+      setTimeout(type, typeSpeed);
+    }
+    setTimeout(type, 1000);
+
+    // --- Scroll Reveal ---
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // --- Animated Counters ---
+    const counters = document.querySelectorAll('.stat-number');
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          const target = parseInt(entry.target.getAttribute('data-target'));
+          const suffix = entry.target.innerText.replace(/[0-9]/g, '').trim();
+          animateValue(entry.target, 0, target, 2000, suffix);
+ counterObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    counters.forEach(c => counterObserver.observe(c));
+
+    function animateValue(obj, start, end, duration, suffix = '') {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if(!startTimestamp) startTimestamp = timestamp;
+ const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+ const value = Math.floor(progress * (end - start) + start);
+ obj.innerHTML = value + (end >= 5 && suffix !== '+' ? '+' : '') + suffix.replace('+','');
+        if(progress < 1) window.requestAnimationFrame(step);
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    // --- Particle Canvas Background ---
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let w, h;
+
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * w;
+        this.y = Math.random() * h;
+        this.size = Math.random() * 2 + 0.5;
+        this.speedY = Math.random() * 0.5 + 0.1;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.color = Math.random() > 0.5 ? 'rgba(138,43,226,' : (Math.random() > 0.5 ? 'rgba(255,0,60,' : 'rgba(0,255,255,');
+ this.opacity = Math.random() * 0.6 + 0.2;
+ this.life = Math.random() * 100 + 100;
+      }
+      update() {
+        this.y -= this.speedY;
+        this.x += this.speedX;
+        this.life--;
+        if(this.life <= 0 || this.y < -10) this.reset();
+      }
+      draw() {
+        ctx.beginPath();
+ ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+ ctx.fillStyle = this.color + this.opacity + ')';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color + '1)';
+        ctx.fill();
+      }
+    }
+
+    // Stars
+    const stars = [];
+    for(let i=0; i<150; i++) stars.push(new Particle());
+
+    // Mouse trail particles
+    let trailParticles = [];
+    function addTrailParticle(x, y) {
+      trailParticles.push({
+        x, y,
+        size: Math.random() * 3 + 1,
+        color: Math.random() > 0.5 ? '138,43,226' : (Math.random() > 0.5 ? '255,0,60' : '0,255,255'),
+        life: 30,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2
+      });
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      if(Math.random() > 0.5) addTrailParticle(e.clientX, e.clientY);
+    });
+
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+
+      // Background stars/particles
+      stars.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      // Trail
+      for(let i=trailParticles.length-1; i>=0; i--) {
+        const p = trailParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        p.size *= 0.95;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${p.color}, ${p.life/30})`;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = `rgba(${p.color}, 1)`;
+        ctx.fill();
+        if(p.life <= 0) trailParticles.splice(i, 1);
+      }
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // --- Music Toggle (Mock) ---
+    const musicToggle = document.getElementById('musicToggle');
+    let musicPlaying = false;
+    musicToggle.addEventListener('click', () => {
+      musicPlaying = !musicPlaying;
+      musicToggle.classList.toggle('playing', musicPlaying);
+      musicToggle.innerHTML = musicPlaying ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-music"></i>';
+      // To add real audio, insert: new Audio('your-music.mp3').play();
+    });
+
+    // --- Form Submit ---
+    document.getElementById('joinForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const inputs = form.querySelectorAll('input');
+      const data = {
+        id: Date.now(),
+        date: new Date().toLocaleString(),
+        ign: inputs[0]?.value || '',
+        discord: inputs[1]?.value || '',
+        age: inputs[2]?.value || '',
+        experience: form.querySelector('select')?.value || '',
+        reason: form.querySelector('textarea')?.value || ''
+      };
+
+      const apps = JSON.parse(localStorage.getItem('dg_applications') || '[]');
+      apps.push(data);
+      localStorage.setItem('dg_applications', JSON.stringify(apps));
+
+      const btn = form.querySelector('button');
+      const original = btn.innerText;
+      btn.innerText = 'Application Sent!';
+      btn.style.background = 'linear-gradient(90deg, #00ff88, #00cc66)';
+      setTimeout(() => {
+        btn.innerText = original;
+        btn.style.background = '';
+        form.reset();
+      }, 3000);
+    });
+
+    // --- Gallery click hint ---
+    document.querySelectorAll('.gallery-item').forEach(item => {
+      item.addEventListener('click', () => {
+        alert('Replace with lightbox or full image view!');
+      });
+    });
+  </script>
+</body>
+</html>
